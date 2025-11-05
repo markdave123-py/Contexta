@@ -1,7 +1,8 @@
-package ingestorengine
+package ingestion_engine
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -25,14 +26,16 @@ func (i *DocumentIngestor) streamChunk(
 	g.Go(func() error {
 		defer close(out)
 
-		var buf []string // rolling fragment buffer
-		var tokSum int   // estimated tokens in the buffer
-		pos := 0         // emitted chunk position
+		var (
+			buf    []string
+			tokSum int
+			pos    int
+		)
 
 		// flush emits the current buffer as a chunk and prepares the buffer for the next chunk,
 		// preserving overlapTokens from the tail if configured.
-		flush := func() error {
-			if tokSum == 0 {
+		flush := func(force bool) error {
+			if tokSum == 0 && !force {
 				return nil
 			}
 			text := strings.Join(buf, "\n")
@@ -45,7 +48,7 @@ func (i *DocumentIngestor) streamChunk(
 			case <-ctx.Done():
 				return ctx.Err()
 			}
-
+			fmt.Printf("[CHUNK #%d] emitted %d tokens (%d lines)\n", pos, tokSum, len(buf))
 			// Compute overlap: keep a tail whose token sum ≈ overlapTokens.
 			if overlapTokens > 0 {
 				keep := []string{}
@@ -72,6 +75,7 @@ func (i *DocumentIngestor) streamChunk(
 
 		for frag := range frags {
 			// Cancel early if downstream failed.
+			fmt.Printf("this is a frag:%s\n", frag)
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -85,14 +89,15 @@ func (i *DocumentIngestor) streamChunk(
 
 			// If we've reached the target, emit a chunk.
 			if tokSum >= targetTokens {
-				if err := flush(); err != nil {
+				if err := flush(false); err != nil {
 					return err
 				}
 			}
+
 		}
 
 		// Emit remaining tail (if any).
-		if err := flush(); err != nil {
+		if err := flush(true); err != nil {
 			return err
 		}
 		return nil
@@ -100,7 +105,6 @@ func (i *DocumentIngestor) streamChunk(
 
 	return out
 }
-
 
 // approxTokens is a cheap token estimator (~4 chars ≈ 1 token).
 // Replace with a real tokenizer later to improve chunk boundaries.

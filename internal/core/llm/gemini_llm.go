@@ -9,7 +9,7 @@ import (
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 
-	"github.com/markdave123-py/Contexta/internal/infra"
+	"github.com/markdave123-py/Contexta/internal/core"
 )
 
 type GeminiLLM struct {
@@ -26,7 +26,7 @@ func NewGeminiLLM(ctx context.Context, apiKey, modelName string) (*GeminiLLM, er
 		return nil, err
 	}
 	if modelName == "" {
-		modelName = "gemini-1.5-flash"
+		modelName = "gemini-2.5-flash"
 	}
 	return &GeminiLLM{client: cl, modelName: modelName}, nil
 }
@@ -63,4 +63,4 @@ func (g *GeminiLLM) Generate(ctx context.Context, systemPrompt, userPrompt strin
 	return b.String(), nil
 }
 
-var _ infra.LLMProvider = (*GeminiLLM)(nil)
+var _ core.LLMProvider = (*GeminiLLM)(nil)

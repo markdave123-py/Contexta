@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contexta - Document Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Screen Styles */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .login-button {
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-button:hover {
+            background: #0056b3;
+        }
+
+        .login-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .switch-auth {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .switch-auth button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Main App Styles (hidden until login) */
+        .app-screen {
+            display: none;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .upload-form {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .file-input {
+            flex: 1;
+        }
+
+        .upload-form input, .upload-form button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .upload-form button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .upload-form button:hover {
+            background: #0056b3;
+        }
+
+        .upload-form button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 250px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .chat-area {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .documents-list {
+            margin-bottom: 20px;
+        }
+
+        .document-item {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .document-item:hover {
+            background: #f0f0f0;
+        }
+
+        .document-item.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .document-status {
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: #007bff;
+        }
+
+        .chat-input button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+
+        .chat-input button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .session-info {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .new-chat-btn:hover {
+            background: #218838;
+        }
+
+        .new-chat-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <h1>Contexta</h1>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-button" id="loginButton">Login</button>
+                <div class="switch-auth">
+                    <button type="button" id="switchToSignup">Don't have an account? Sign up</button>
+                </div>
+            </form>
+
+            <form class="login-form" id="signupForm" style="display: none;">
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupName">Full Name</label>
+                    <input type="text" id="signupName" name="name" required>
+                </div>
+                <button type="submit" class="login-button" id="signupButton">Sign Up</button>
+                <div class="switch-auth">
+                    <button type="button" id="switchToLogin">Already have an account? Login</button>
+                </div>
+            </form>
+            <div id="authStatus"></div>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until login) -->
+    <div class="app-screen" id="appScreen">
+        <div class="container">
+            <div class="header">
+                <h1>Contexta - Document Chat</h1>
+                <div class="user-info">
+                    <span>Welcome, <span id="userEmail"></span></span>
+                    <button class="logout-btn" id="logoutButton">Logout</button>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h3>Upload Document</h3>
+                <form class="upload-form" id="uploadForm">
+                    <div class="file-input">
+                        <input type="file" id="fileInput" accept=".pdf,.txt,.docx" required>
+                    </div>
+                    <button type="submit" id="uploadButton">Upload</button>
+                </form>
+                <div id="uploadStatus"></div>
+            </div>
+
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <h3>Your Documents</h3>
+                    <div class="documents-list" id="documentsList">
+                        <div class="loading">Loading documents...</div>
+                    </div>
+
+                    <button class="new-chat-btn" id="newChatBtn" disabled>New Chat</button>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="chat-area">
+                    <div id="chatHeader">
+                        <h3>Select a document to start chatting</h3>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant">
+                            Welcome! Upload a document and then select it from the sidebar to start asking questions.
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="Ask a question about the document..." disabled>
+                        <button id="sendButton" disabled>Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

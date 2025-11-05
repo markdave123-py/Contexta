@@ -1,9 +1,10 @@
-package ingestorengine
+package ingestion_engine
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
@@ -13,15 +14,14 @@ import (
 // docID:      current document ID.
 // in:         chunk stream from streamChunk.
 // batchSize:  number of chunks to embed/write per batch (limits memory).
-// embedDim:   model dimension (0 = default).
 func (i *DocumentIngestor) embedAndPersist(
 	ctx context.Context,
 	docID string,
 	in <-chan chunk,
 	batchSize int,
-	embedDim int,
 ) error {
 	batch := make([]chunk, 0, batchSize)
+	fmt.Printf("[EMBED] received %d chunks\n", len(batch))
 
 	// flush embeds the current batch and inserts it into the database.
 	flush := func(items []chunk) error {
@@ -34,7 +34,7 @@ func (i *DocumentIngestor) embedAndPersist(
 			texts[idx] = items[idx].Text
 		}
 
-		vecs, err := i.embedder.EmbedTexts(ctx, texts, embedDim)
+		vecs, err := i.embedder.EmbedTexts(ctx, texts)
 		if err != nil {
 			return fmt.Errorf("embed: %w", err)
 		}
@@ -46,6 +46,7 @@ func (i *DocumentIngestor) embedAndPersist(
 		rows := make([]models.DocumentChunk, len(items))
 		for k := range items {
 			rows[k] = models.DocumentChunk{
+				ID:         uuid.NewString(),
 				DocumentID: docID,
 				Text:       items[k].Text,
 				Embedding:  vecs[k],

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS documents (
   file_name    TEXT NOT NULL,
   storage_url  TEXT NOT NULL,
   source_type  TEXT NOT NULL CHECK (source_type IN ('upload','url')),
+  content_type VARCHAR(255),
   status       TEXT NOT NULL CHECK (status IN ('uploaded','processing','ready','failed')),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -1,7 +1,6 @@
 package objectclient
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -56,13 +55,13 @@ func NewS3Client(ctx context.Context, cfg *cfg.Config) (core.ObjectClient, error
 }
 
 // UploadFile uploads a file to S3 and returns the public URL.
-func (c *S3Client) UploadFile(ctx context.Context, bucket, key string, data []byte, contentType string) (string, error) {
+func (c *S3Client) UploadFile(ctx context.Context, bucket, key string, data io.Reader, contentType string) (string, error) {
 	uploader := manager.NewUploader(c.client)
 
 	input := &s3.PutObjectInput{
 		Bucket:      aws.String(bucket),
 		Key:         aws.String(key),
-		Body:        bytes.NewReader(data),
+		Body:        data,
 		ContentType: aws.String(contentType),
 	}
 
@@ -113,7 +112,6 @@ func (c *S3Client) GetFile(ctx context.Context, bucket, key string) ([]byte, err
 	return body, nil
 }
 
-
 func (c *S3Client) GetObjectReader(ctx context.Context, bucket, key string) (io.ReadCloser, error) {
 	ctxGet, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
@@ -128,4 +126,3 @@ func (c *S3Client) GetObjectReader(ctx context.Context, bucket, key string) (io.
 
 	return resp.Body, nil
 }
-

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"io"
 	"path"
 	"strings"
 
@@ -20,7 +21,7 @@ func NewDocumentService(db core.DbClient, storage core.ObjectClient, bucket stri
 	return &DocumentService{db: db, storage: storage, bucket: bucket}
 }
 
-func (s *DocumentService) UploadAndCreate(ctx context.Context, userID, filename, contentType string, data []byte, sourceType string) (*models.Document, error) {
+func (s *DocumentService) UploadAndCreate(ctx context.Context, userID, filename, contentType string, data io.Reader, sourceType string) (*models.Document, error) {
 	docID := uuid.NewString()
 	key := s.objectKey(userID, docID, filename)
 

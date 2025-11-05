@@ -8,7 +8,7 @@ import (
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 
-	"github.com/markdave123-py/Contexta/internal/infra"
+	"github.com/markdave123-py/Contexta/internal/core"
 )
 
 type GeminiEmbedder struct {
@@ -39,7 +39,7 @@ func (g *GeminiEmbedder) Close() error {
 }
 
 // EmbedTexts batches all texts in one request via EmbeddingBatch.
-func (g *GeminiEmbedder) EmbedTexts(ctx context.Context, texts []string, dim int) ([][]float32, error) {
+func (g *GeminiEmbedder) EmbedTexts(ctx context.Context, texts []string) ([][]float32, error) {
 	if len(texts) == 0 {
 		return nil, nil
 	}
@@ -63,4 +63,4 @@ func (g *GeminiEmbedder) EmbedTexts(ctx context.Context, texts []string, dim int
 	return out, nil
 }
 
-var _ infra.EmbeddingProvider = (*GeminiEmbedder)(nil)
+var _ core.EmbeddingProvider = (*GeminiEmbedder)(nil)

@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"context"
 	"log"
@@ -13,8 +12,12 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// Create a background context for the application lifecycle
+	ctx := context.Background()
+
+	// Handle SIGINT/SIGTERM for graceful shutdown
+	ctx, cancel := context.WithCancel(ctx)
+	
 
 	// Handle SIGINT/SIGTERM for graceful shutdown
 	go func() {
@@ -26,12 +29,23 @@ func main() {
 
 	cfg := config.LoadConfig()
 	application, err := app.NewApp(ctx, cfg)
+
+	// application.
 	if err != nil {
 		log.Fatalf("startup failed: %v", err)
 	}
 	defer application.Close()
 
-	log.Println("Contexta is running; DB connected and bootstrapped.")
+	// start the document ingestion worker
+	go application.DocProcessor.Start(ctx)
+
+	// start HTTP server
+	go application.Server.Start()
+
+	log.Println("Contexta server is running; ready to serve request")
 	<-ctx.Done()
+
+	cancel()
+	application.Server.Shutdown(context.Background())
 	log.Println("shutting down...")
 }

@@ -1,6 +1,8 @@
-package ingestorengine
+package ingestion_engine
 
-import "github.com/markdave123-py/Contexta/internal/core"
+import (
+	"github.com/markdave123-py/Contexta/internal/core"
+)
 
 // IngestConfig tunes the streaming pipeline.
 //
@@ -13,7 +15,6 @@ type IngestConfig struct {
 	TargetTokens   int
 	OverlapTokens  int
 	BatchSize      int
-	MaxFragmentLen int
 	EmbedDim       int
 }
 
@@ -39,6 +40,12 @@ type DocumentIngestor struct {
 	db       core.DbClient
 	obj      core.ObjectClient
 	embedder core.EmbeddingProvider
-	cfg      IngestConfig
+	extrator core.DocumentExtractor
+	cfg      *IngestConfig
 	jobs     chan string
+}
+
+// DocumentExtractor implements core.DocumentExtractor using sajari/docconv.
+type DocconvExtractor struct {
+	useReadability bool
 }

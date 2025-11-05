@@ -19,6 +19,7 @@ type Config struct {
 	EmbedModel   string
 	EmbedDim     int
 	GenModel     string
+	Port         string
 }
 
 // LoadConfig loads the environment variables and return config
@@ -37,6 +38,7 @@ func LoadConfig() *Config {
 		EmbedModel:   getEnv("EMBED_MODEL", "text-embedding-004"),
 		EmbedDim:     getEnvInt("EMBED_DIM", 1536),
 		GenModel:     getEnv("GEN_MODEL", "gemini-1.5-flash"),
+		Port:         getEnv("PORT", "8080"),
 	}
 
 	if cfg.DatabaseURL == "" {

@@ -21,6 +21,7 @@ type Document struct {
 	FileName    string    `db:"file_name" json:"file_name"`
 	StorageURL  string    `db:"storage_url" json:"storage_url"` // S3 URL or original link
 	SourceType  string    `db:"source_type" json:"source_type"` // "upload" or "url"
+	ContentType string 	  `db:"content_type" json:"content_type"`
 	Status      string    `db:"status" json:"status"`           // uploaded | processing | ready | failed
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`

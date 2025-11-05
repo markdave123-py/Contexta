@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/pgvector/pgvector-go"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/markdave123-py/Contexta/internal/config"
@@ -119,24 +121,24 @@ func (c *DatabaseClient) CreateDocument(ctx context.Context, doc *models.Documen
 	}
 	const q = `
 		INSERT INTO documents
-			(id, user_id, file_name, storage_url, source_type, status, created_at, updated_at)
+			(id, user_id, file_name, storage_url, source_type, content_type, status, created_at, updated_at)
 		VALUES
-			($1, $2, $3, $4, $5, $6, COALESCE($7, now()), COALESCE($8, now()))
+			($1, $2, $3, $4, $5, $6, $7, COALESCE($8, now()), COALESCE($9, now()))
 	`
 	_, err := c.db.ExecContext(ctx, q,
-		doc.ID, doc.UserID, doc.FileName, doc.StorageURL, doc.SourceType, doc.Status, doc.CreatedAt, doc.UpdatedAt)
+		doc.ID, doc.UserID, doc.FileName, doc.StorageURL, doc.SourceType, doc.ContentType, doc.Status, doc.CreatedAt, doc.UpdatedAt)
 	return err
 }
 
 func (c *DatabaseClient) GetDocumentByID(ctx context.Context, id string) (*models.Document, error) {
 	const q = `
-		SELECT id, user_id, file_name, storage_url, source_type, status, created_at, updated_at
+		SELECT id, user_id, file_name, storage_url, source_type, content_type, status, created_at, updated_at
 		FROM documents
 		WHERE id = $1
 	`
 	var d models.Document
 	err := c.db.QueryRowContext(ctx, q, id).Scan(
-		&d.ID, &d.UserID, &d.FileName, &d.StorageURL, &d.SourceType, &d.Status, &d.CreatedAt, &d.UpdatedAt,
+		&d.ID, &d.UserID, &d.FileName, &d.StorageURL, &d.SourceType, &d.ContentType, &d.Status, &d.CreatedAt, &d.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -201,6 +203,7 @@ func (c *DatabaseClient) InsertDocumentChunks(ctx context.Context, chunks []mode
 	if err != nil {
 		return err
 	}
+
 	const q = `
 		INSERT INTO document_chunks
 			(id, document_id, position, text, embedding, token_count, created_at)
@@ -215,9 +218,11 @@ func (c *DatabaseClient) InsertDocumentChunks(ctx context.Context, chunks []mode
 
 	for i := range chunks {
 		ch := &chunks[i]
+		vec := pgvector.NewVector(ch.Embedding)
+
 		// Embedding []float32 maps to pgvector via pgx stdlib; ensure your pgx/stdlib is imported.
 		if _, err := stmt.ExecContext(ctx,
-			ch.ID, ch.DocumentID, ch.Position, ch.Text, ch.Embedding, ch.TokenCount, ch.CreatedAt,
+			ch.ID, ch.DocumentID, ch.Position, ch.Text, vec, ch.TokenCount, ch.CreatedAt,
 		); err != nil {
 			_ = tx.Rollback()
 			return err
@@ -252,8 +257,34 @@ func (c *DatabaseClient) GetChunksByDocument(ctx context.Context, documentID str
 	return out, rows.Err()
 }
 
-// Optional: small helper for time.Now() if you want explicit timestamps
-func nowPtr() *time.Time {
-	t := time.Now()
-	return &t
+// SearchDocumentChunks finds top-k similar chunks within a document for a query embedding.
+func (c *DatabaseClient) SearchDocumentChunks(ctx context.Context, docID string, queryVec []float32, limit int) ([]models.DocumentChunk, error) {
+    const q = `
+        SELECT id, document_id, position, text, embedding, token_count
+        FROM document_chunks
+        WHERE document_id = $1
+        ORDER BY embedding <-> $2
+        LIMIT $3
+    `
+	vec := pgvector.NewVector(queryVec)
+    rows, err := c.db.QueryContext(ctx, q, docID, vec, limit)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var out []models.DocumentChunk
+    for rows.Next() {
+        var (
+            ch  models.DocumentChunk
+            emb pgvector.Vector
+        )
+        if err := rows.Scan(&ch.ID, &ch.DocumentID, &ch.Position, &ch.Text, &emb, &ch.TokenCount); err != nil {
+            return nil, err
+        }
+		ch.Embedding = emb.Slice()
+        out = append(out, ch)
+    }
+    return out, nil
 }
+
