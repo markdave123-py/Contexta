@@ -21,25 +21,25 @@ func NewDocumentIngestor(db core.DbClient, obj core.ObjectClient, emb core.Embed
 
 // Start runs a single worker goroutine reading from the jobs channel.
 // It ochestrate the pipeline that extract, parse, embed and persist docs.
-func (i *DocumentIngestor) Start(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("DocumentIngestor: Worker shutting down.")
-				return
-			case docID := <-i.jobs:
-				log.Printf("DocumentIngestor: Processing document %s", docID)
+func (i *DocumentIngestor) Start(ctx context.Context, numWorkers int) {
 
-				// procCtx, _ := context.WithTimeout(context.Background(), 30*time.Minute)
-				if err := i.processOne(ctx, docID); err != nil {
-					log.Printf("DocumentIngestor: Error processing document %s: %v", docID, err)
-					// Handle specific errors, retry logic, or dead-letter queue if needed
+	for w := 1; w <= numWorkers; w++ {
+		go func(w int) {
+			for {
+				select {
+				case <-ctx.Done():
+					log.Println("DocumentIngestor: Worker shutting down.")
+					return
+				case docID := <-i.jobs:
+					log.Printf("DocumentIngestor: Processing document %s by worker with ID %d", docID, w)
+
+					if err := i.processOne(ctx, docID); err != nil {
+						log.Printf("DocumentIngestor: Error processing document %s: %v", docID, err)
+					}
 				}
-				// cancel()
 			}
-		}
-	}()
+		}(w)
+	}
 }
 
 // Enqueue schedules a document ID for ingestion.
@@ -50,7 +50,7 @@ func (i *DocumentIngestor) Enqueue(docID string) {
 
 // processOne streams, chunks, embeds and persists for a single document ID.
 func (i *DocumentIngestor) processOne(ctx context.Context, docID string) error { // Create a fresh context with longer timeout for processing
-	proctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	proctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	doc, err := i.db.GetDocumentByID(ctx, docID)
@@ -75,8 +75,6 @@ func (i *DocumentIngestor) processOne(ctx context.Context, docID string) error {
 
 	// fragments -> chunks (receive-only channel).
 	chunkCh := i.streamChunk(gctx, g, fragCh, i.cfg.TargetTokens, i.cfg.OverlapTokens)
-
-	println(len(chunkCh))
 
 	// chunks → embed + persist.
 	g.Go(func() error {

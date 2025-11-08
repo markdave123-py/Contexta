@@ -30,7 +30,7 @@ func NewDocumentHandler(dbclient core.DbClient, objectclient *core.ObjectClient,
 // UploadDocument handles file upload, DB insert, and background processing.
 func (h *DocumentHandler) UploadDocument(w http.ResponseWriter, r *http.Request) {
 
-	r.ParseMultipartForm(32 << 20) // 32 MB
+	r.ParseMultipartForm(52 << 20) // 352 MB
 
 	userID, ok := r.Context().Value("user_id").(string)
 	if !ok {

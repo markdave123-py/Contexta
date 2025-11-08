@@ -9,17 +9,18 @@ import (
 )
 
 type Config struct {
-	DatabaseURL  string
-	AwsAccessKey string
-	AwsSecretKey string
-	AwsRegion    string
-	BucketName   string
-	SslCertPath  string
-	AIAPIKey     string
-	EmbedModel   string
-	EmbedDim     int
-	GenModel     string
-	Port         string
+	DatabaseURL   string
+	AwsAccessKey  string
+	AwsSecretKey  string
+	AwsRegion     string
+	BucketName    string
+	SslCertPath   string
+	AIAPIKey      string
+	EmbedModel    string
+	EmbedDim      int
+	GenModel      string
+	Port          string
+	NumProcessors int
 }
 
 // LoadConfig loads the environment variables and return config
@@ -28,7 +29,7 @@ func LoadConfig() *Config {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		DatabaseURL:  getEnv("DATABASE_URL", ""),
+		DatabaseURL:  getEnv("DATABASE_URL_", ""),
 		AwsAccessKey: getEnv("AWS_ACCESS_KEY", ""),
 		AwsSecretKey: getEnv("AWS_SECRET_KEY", ""),
 		AwsRegion:    getEnv("AWS_REGION", "us-east-2"),
@@ -39,6 +40,7 @@ func LoadConfig() *Config {
 		EmbedDim:     getEnvInt("EMBED_DIM", 1536),
 		GenModel:     getEnv("GEN_MODEL", "gemini-1.5-flash"),
 		Port:         getEnv("PORT", "8080"),
+		NumProcessors: getEnvInt("NUMBER_OF_PROCESSORS", 5),
 	}
 
 	if cfg.DatabaseURL == "" {

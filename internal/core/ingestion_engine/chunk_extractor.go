@@ -74,8 +74,6 @@ func (i *DocumentIngestor) streamChunk(
 		}
 
 		for frag := range frags {
-			// Cancel early if downstream failed.
-			fmt.Printf("this is a frag:%s\n", frag)
 			select {
 			case <-ctx.Done():
 				return ctx.Err()

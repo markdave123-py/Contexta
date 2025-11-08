@@ -17,7 +17,6 @@ func main() {
 
 	// Handle SIGINT/SIGTERM for graceful shutdown
 	ctx, cancel := context.WithCancel(ctx)
-	
 
 	// Handle SIGINT/SIGTERM for graceful shutdown
 	go func() {
@@ -37,7 +36,7 @@ func main() {
 	defer application.Close()
 
 	// start the document ingestion worker
-	go application.DocProcessor.Start(ctx)
+	go application.DocProcessor.Start(ctx, cfg.NumProcessors)
 
 	// start HTTP server
 	go application.Server.Start()

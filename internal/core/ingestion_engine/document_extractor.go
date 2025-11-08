@@ -20,7 +20,7 @@ func NewDocconvExtractor(useReadability bool) *DocconvExtractor {
 // ExtractText uses docconv to extract text from the given reader based on content type.
 // It writes the extracted text as fragments to the output channel.
 func (e *DocconvExtractor) ExtractText(ctx context.Context, g *errgroup.Group, r []byte, contentType string) (<-chan string, error) {
-	out := make(chan string, 31) // Buffered channel for fragments
+	out := make(chan string, 32) // Buffered channel for fragments
 
 	reader := bytes.NewReader(r)
 
