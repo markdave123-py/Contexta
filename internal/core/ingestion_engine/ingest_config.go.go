@@ -2,6 +2,8 @@ package ingestion_engine
 
 import (
 	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
+	objectclient "github.com/markdave123-py/Contexta/internal/core/object-client"
 )
 
 // IngestConfig tunes the streaming pipeline.
@@ -12,10 +14,10 @@ import (
 // MaxFragmentLen: soft upper bound for individual fragments coming from the extractor.
 // EmbedDim:       embedding dimension (use 0 to let model default apply; set to 768 if you want IVF on pgvector).
 type IngestConfig struct {
-	TargetTokens   int
-	OverlapTokens  int
-	BatchSize      int
-	EmbedDim       int
+	TargetTokens  int
+	OverlapTokens int
+	BatchSize     int
+	EmbedDim      int
 }
 
 // chunk is the internal representation passed through the pipeline.
@@ -37,8 +39,8 @@ type chunk struct {
 // cfg:       runtime tuning knobs for the pipeline.
 // jobs:      in-memory queue of document IDs to process (easy to swap with Kafka later).
 type DocumentIngestor struct {
-	db       core.DbClient
-	obj      core.ObjectClient
+	db       db.DbClient
+	obj      objectclient.ObjectClient
 	embedder core.EmbeddingProvider
 	extrator core.DocumentExtractor
 	cfg      *IngestConfig

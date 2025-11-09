@@ -14,7 +14,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/markdave123-py/Contexta/internal/config"
-	"github.com/markdave123-py/Contexta/internal/core"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
@@ -22,7 +21,7 @@ type DatabaseClient struct {
 	db *sql.DB
 }
 
-func NewDatabaseClient(ctx context.Context, cfg *config.Config) (core.DbClient, error) {
+func NewDatabaseClient(ctx context.Context, cfg *config.Config) (DbClient, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("database client configuration is nil")
 	}
@@ -259,7 +258,7 @@ func (c *DatabaseClient) GetChunksByDocument(ctx context.Context, documentID str
 
 // SearchDocumentChunks finds top-k similar chunks within a document for a query embedding.
 func (c *DatabaseClient) SearchDocumentChunks(ctx context.Context, docID string, queryVec []float32, limit int) ([]models.DocumentChunk, error) {
-    const q = `
+	const q = `
         SELECT id, document_id, position, text, embedding, token_count
         FROM document_chunks
         WHERE document_id = $1
@@ -267,24 +266,23 @@ func (c *DatabaseClient) SearchDocumentChunks(ctx context.Context, docID string,
         LIMIT $3
     `
 	vec := pgvector.NewVector(queryVec)
-    rows, err := c.db.QueryContext(ctx, q, docID, vec, limit)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := c.db.QueryContext(ctx, q, docID, vec, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var out []models.DocumentChunk
-    for rows.Next() {
-        var (
-            ch  models.DocumentChunk
-            emb pgvector.Vector
-        )
-        if err := rows.Scan(&ch.ID, &ch.DocumentID, &ch.Position, &ch.Text, &emb, &ch.TokenCount); err != nil {
-            return nil, err
-        }
+	var out []models.DocumentChunk
+	for rows.Next() {
+		var (
+			ch  models.DocumentChunk
+			emb pgvector.Vector
+		)
+		if err := rows.Scan(&ch.ID, &ch.DocumentID, &ch.Position, &ch.Text, &emb, &ch.TokenCount); err != nil {
+			return nil, err
+		}
 		ch.Embedding = emb.Slice()
-        out = append(out, ch)
-    }
-    return out, nil
+		out = append(out, ch)
+	}
+	return out, nil
 }
-

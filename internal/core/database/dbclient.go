@@ -1,8 +1,7 @@
-package core
+package db
 
 import (
 	"context"
-	"io"
 
 	"github.com/markdave123-py/Contexta/internal/models"
 )
@@ -23,17 +22,9 @@ type DbClient interface {
 
 	SearchDocumentChunks(ctx context.Context, docID string, queryVec []float32, limit int) ([]models.DocumentChunk, error)
 
+	Close() error
+
 	// CreateChatSession(ctx context.Context, session *models.ChatSession) error
 	// AddChatMessage(ctx context.Context, message *models.ChatMessage) error
 	// GetMessagesBySession(ctx context.Context, sessionID string) ([]models.ChatMessage, error)
-}
-
-// ObjectClient defines interactions with S3 or any object storage.
-// It’s abstract so you can replace AWS with MinIO, GCP, etc. easily.
-type ObjectClient interface {
-	UploadFile(ctx context.Context, bucket, key string, data io.Reader, contentType string) (url string, err error)
-	DeleteFile(ctx context.Context, bucket, key string) error
-	GetFile(ctx context.Context, bucket, key string) ([]byte, error)
-
-	GetObjectReader(ctx context.Context, bucket, key string) (io.ReadCloser, error)
 }

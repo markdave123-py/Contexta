@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
+	objectclient "github.com/markdave123-py/Contexta/internal/core/object-client"
 	"golang.org/x/sync/errgroup"
 )
 
 // NewDocumentIngestor constructs the ingestor with a bounded job queue (64).
-func NewDocumentIngestor(db core.DbClient, obj core.ObjectClient, emb core.EmbeddingProvider, extrator core.DocumentExtractor, cfg *IngestConfig) *DocumentIngestor {
+func NewDocumentIngestor(db db.DbClient, obj objectclient.ObjectClient, emb core.EmbeddingProvider, extrator core.DocumentExtractor, cfg *IngestConfig) Ingestor {
 	return &DocumentIngestor{
 		db: db, obj: obj, embedder: emb, cfg: cfg, extrator: extrator,
 		jobs: make(chan string, 64),
@@ -33,7 +35,7 @@ func (i *DocumentIngestor) Start(ctx context.Context, numWorkers int) {
 				case docID := <-i.jobs:
 					log.Printf("DocumentIngestor: Processing document %s by worker with ID %d", docID, w)
 
-					if err := i.processOne(ctx, docID); err != nil {
+					if err := i.ProcessOne(ctx, docID); err != nil {
 						log.Printf("DocumentIngestor: Error processing document %s: %v", docID, err)
 					}
 				}
@@ -49,7 +51,7 @@ func (i *DocumentIngestor) Enqueue(docID string) {
 }
 
 // processOne streams, chunks, embeds and persists for a single document ID.
-func (i *DocumentIngestor) processOne(ctx context.Context, docID string) error { // Create a fresh context with longer timeout for processing
+func (i *DocumentIngestor) ProcessOne(ctx context.Context, docID string) error { // Create a fresh context with longer timeout for processing
 	proctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 

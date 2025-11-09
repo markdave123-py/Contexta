@@ -7,15 +7,16 @@ import (
 	"strings"
 
 	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
 )
 
 type ChatHandler struct {
-	dbclient core.DbClient
+	dbclient db.DbClient
 	embedder core.EmbeddingProvider
 	llm      core.LLMProvider
 }
 
-func NewChatHandler(db core.DbClient, emb core.EmbeddingProvider, llm core.LLMProvider) *ChatHandler {
+func NewChatHandler(db db.DbClient, emb core.EmbeddingProvider, llm core.LLMProvider) *ChatHandler {
 	return &ChatHandler{dbclient: db, embedder: emb, llm: llm}
 }
 
@@ -41,16 +42,14 @@ func (h *ChatHandler) QueryDocument(w http.ResponseWriter, r *http.Request) {
 
 	// Confirm document belongs to user
 	doc, err := h.dbclient.GetDocumentByID(ctx, req.DocumentID)
-	if err != nil || doc == nil{
+	if err != nil || doc == nil {
 		http.Error(w, "document not found", http.StatusNotFound)
 		return
 	}
 
-	if doc.UserID != userID{
+	if doc.UserID != userID {
 		http.Error(w, "you are unauthoriazed to access this document", http.StatusUnauthorized)
 	}
-
-	
 
 	// Embed the query
 	vecs, err := h.embedder.EmbedTexts(ctx, []string{req.Query})

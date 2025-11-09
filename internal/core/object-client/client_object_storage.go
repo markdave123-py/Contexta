@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	cfg "github.com/markdave123-py/Contexta/internal/config"
-	"github.com/markdave123-py/Contexta/internal/core"
 )
 
 type S3Client struct {
@@ -22,7 +21,7 @@ type S3Client struct {
 	bucket string
 }
 
-func NewS3Client(ctx context.Context, cfg *cfg.Config) (core.ObjectClient, error) {
+func NewS3Client(ctx context.Context, cfg *cfg.Config) (ObjectClient, error) {
 	if cfg.AwsAccessKey == "" || cfg.AwsSecretKey == "" {
 		return nil, fmt.Errorf("AWS credentials not set")
 	}

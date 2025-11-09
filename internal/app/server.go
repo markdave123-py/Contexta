@@ -14,7 +14,9 @@ import (
 	appMiddleware "github.com/markdave123-py/Contexta/internal/api/middlewares"
 	"github.com/markdave123-py/Contexta/internal/config"
 	"github.com/markdave123-py/Contexta/internal/core"
-	ingestor "github.com/markdave123-py/Contexta/internal/core/ingestion_engine"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
+	"github.com/markdave123-py/Contexta/internal/core/ingestion_engine"
+	objectclient "github.com/markdave123-py/Contexta/internal/core/object-client"
 )
 
 // Server wraps the HTTP server instance and its handlers.
@@ -23,9 +25,9 @@ type Server struct {
 }
 
 // NewServer builds and wires all routes.
-func NewServer(ctx context.Context, cfg *config.Config, db core.DbClient, obj core.ObjectClient, ing *ingestor.DocumentIngestor, emb core.EmbeddingProvider, llm core.LLMProvider) *Server {
+func NewServer(ctx context.Context, cfg *config.Config, db db.DbClient, obj objectclient.ObjectClient, ing ingestion_engine.Ingestor, emb core.EmbeddingProvider, llm core.LLMProvider) *Server {
 	authHandler := handlers.NewAuthHandler(db)
-	docHandler := handlers.NewDocumentHandler(db, &obj, ing, cfg)
+	docHandler := handlers.NewDocumentHandler(db, obj, ing, cfg)
 	chatHandler := handlers.NewChatHandler(db, emb, llm)
 
 	r := chi.NewRouter()

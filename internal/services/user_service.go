@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 
-	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
 type UserService struct {
-	db core.DbClient
+	db db.DbClient
 }
 
-func NewUserService(db core.DbClient) *UserService {
+func NewUserService(db db.DbClient) *UserService {
 	return &UserService{db: db}
 }
 

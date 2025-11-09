@@ -7,17 +7,18 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
+	objectclient "github.com/markdave123-py/Contexta/internal/core/object-client"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
 type DocumentService struct {
-	db      core.DbClient
-	storage core.ObjectClient
+	db      db.DbClient
+	storage objectclient.ObjectClient
 	bucket  string
 }
 
-func NewDocumentService(db core.DbClient, storage core.ObjectClient, bucket string) *DocumentService {
+func NewDocumentService(db db.DbClient, storage objectclient.ObjectClient, bucket string) *DocumentService {
 	return &DocumentService{db: db, storage: storage, bucket: bucket}
 }
 

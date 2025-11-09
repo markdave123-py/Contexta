@@ -15,9 +15,9 @@ import (
 )
 
 type App struct {
-	DBClient     *db.DatabaseClient
-	ObjectClient *objectclient.S3Client
-	DocProcessor *ingestion_engine.DocumentIngestor
+	DBClient     db.DbClient
+	ObjectClient objectclient.ObjectClient
+	DocProcessor ingestion_engine.Ingestor
 	Server       *Server
 }
 

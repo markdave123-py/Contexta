@@ -11,15 +11,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/google/uuid"
-	"github.com/markdave123-py/Contexta/internal/core"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
 type AuthHandler struct {
-	dbclient core.DbClient
+	dbclient db.DbClient
 }
 
-func NewAuthHandler(dbclient core.DbClient) *AuthHandler {
+func NewAuthHandler(dbclient db.DbClient) *AuthHandler {
 	return &AuthHandler{dbclient: dbclient}
 }
 
@@ -45,7 +45,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.dbclient.CreateUser(context.Background(), user); err != nil {
-		http.Error(w, "user exists", 409)
+		http.Error(w, "user exists", http.StatusConflict)
 		return
 	}
 
@@ -56,12 +56,16 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req signupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", 400)
+		http.Error(w, "invalid body", http.StatusNotFound)
 		return
 	}
 
 	user, err := h.dbclient.GetUserByEmail(context.Background(), req.Email)
-	if err != nil || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
+	if err != nil || user == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
 		http.Error(w, "invalid credentials", 401)
 		return
 	}

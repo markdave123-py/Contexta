@@ -11,20 +11,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/markdave123-py/Contexta/internal/config"
-	"github.com/markdave123-py/Contexta/internal/core"
-	ingestor "github.com/markdave123-py/Contexta/internal/core/ingestion_engine"
+	db "github.com/markdave123-py/Contexta/internal/core/database"
+	"github.com/markdave123-py/Contexta/internal/core/ingestion_engine"
+	objectclient "github.com/markdave123-py/Contexta/internal/core/object-client"
 	"github.com/markdave123-py/Contexta/internal/models"
 )
 
 type DocumentHandler struct {
-	dbclient     core.DbClient
-	objectclient core.ObjectClient
-	ingestor     *ingestor.DocumentIngestor
+	dbclient     db.DbClient
+	objectclient objectclient.ObjectClient
+	ingestor     ingestion_engine.Ingestor
 	cfg          *config.Config
 }
 
-func NewDocumentHandler(dbclient core.DbClient, objectclient *core.ObjectClient, ing *ingestor.DocumentIngestor, cfg *config.Config) *DocumentHandler {
-	return &DocumentHandler{dbclient: dbclient, objectclient: *objectclient, ingestor: ing, cfg: cfg}
+func NewDocumentHandler(dbclient db.DbClient, objectclient objectclient.ObjectClient, ing ingestion_engine.Ingestor, cfg *config.Config) *DocumentHandler {
+	return &DocumentHandler{dbclient: dbclient, objectclient: objectclient, ingestor: ing, cfg: cfg}
 }
 
 // UploadDocument handles file upload, DB insert, and background processing.
